@@ -18,6 +18,7 @@ export const addProductService = async (productData, file) => {
     product_type,
     categories,
     brands,
+    totalStock
   } = productData;
 
   if (!file) throw new CustomError("Product image is required", 400);
@@ -40,6 +41,7 @@ export const addProductService = async (productData, file) => {
     product_type,
     categories,
     brands,
+    totalStock,
   });
 
   return newProduct;
@@ -97,26 +99,48 @@ export const getProductDetailsService = async (productId) => {
 
 export const getFilteredProductsService = async (queryParams) => {
   const {
-    keyword = "",
+    keyword = '',
     category,
+    product_type,
     brand,
-    sort = "asc",
+    minPrice,
+    maxPrice,
+    sort = 'asc',
     page = 1,
     limit = 10,
   } = queryParams;
 
   const query = {
     $or: [
-      { product_name: { $regex: keyword, $options: "i" } },
-      { desc: { $regex: keyword, $options: "i" } },
+      { product_name: { $regex: keyword, $options: 'i' } },
+      { desc: { $regex: keyword, $options: 'i' } },
     ],
   };
 
-  if (category) query.categories = category;
-  if (brand) query.brands = brand;
+  // Category filter (assuming it's stored as a string in `categories` field)
+  if (category) {
+    query.categories = category;
+  }
+
+  // Product type filter
+  if (product_type) {
+    query.product_type = product_type;
+  }
+
+  // Brand filter
+  if (brand) {
+    query.brands = brand;
+  }
+
+  // Price range filter
+  if (minPrice || maxPrice) {
+    query.salesPrice = {};
+    if (minPrice) query.salesPrice.$gte = Number(minPrice);
+    if (maxPrice) query.salesPrice.$lte = Number(maxPrice);
+  }
 
   const skip = (Number(page) - 1) * Number(limit);
-  const sortOption = { salesPrice: sort === "desc" ? -1 : 1 };
+  const sortOption = { salesPrice: sort === 'desc' ? -1 : 1 };
 
   const [products, total] = await Promise.all([
     Product.find(query).sort(sortOption).skip(skip).limit(Number(limit)),

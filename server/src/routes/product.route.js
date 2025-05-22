@@ -14,17 +14,12 @@ import { validate } from "../middlewares/validate.middleware.js";
 const router = express.Router();
 
 // Admin Routes
-router.get("/", getAllProducts);
-
-// Validate product creation
-router.post("/add", isAuthenticated, validate(createProductSchema), addProducts);
-
-// Validate product update (allow partial updates)
-router.put("/update/:id", isAuthenticated, validate(updateProductSchema), updateProducts);
-
-router.delete("/delete/:id", isAuthenticated, deleteProducts);
+router.post("/add",  isAuthenticated, isAuthorized, validate(createProductSchema), addProducts);
+router.put("/update/:id", isAuthenticated, isAuthorized, validate(updateProductSchema), updateProducts);
+router.delete("/delete/:id", isAuthenticated, isAuthorized, deleteProducts);
 
 // Public Routes
+router.get("/", getAllProducts);
 router.get("/filter", getFilterProducts);
 router.get("/:id", getProductDetails);
 

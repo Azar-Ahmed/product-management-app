@@ -1,210 +1,233 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Spinner } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchProductById, updateProduct, clearProduct } from '../features/product/productSlice';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchProductById,
+  updateProduct,
+} from "../redux/slices/productSlice";
+import { useNavigate, useParams } from "react-router-dom";
+import { Container, Form, Button, Spinner, Alert } from "react-bootstrap";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const EditProduct = () => {
-  const { id } = useParams();
+function EditProduct() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  const { product, loading, error } = useSelector((state) => state.products);
+  const {
+    productDetails,
+    status,
+    error,
+    updateProductStatus,
+    updateProductError,
+  } = useSelector((state) => state.products);
 
-  const [formData, setFormData] = useState({
-    product_name: '',
-    desc: '',
-    mrp: '',
-    salesPrice: '',
-    colors: '',
-    ratings: '',
-    product_type: '',
-    categories: '',
-    brands: '',
-    image: '',
+  const [form, setForm] = useState({
+    product_name: "",
+    desc: "",
+    mrp: "",
+    salesPrice: "",
+    colors: "",
+    product_type: "",
+    categories: "",
+    brands: "",
+    totalStock: "",
+    image: null,
   });
 
-  const [uploading, setUploading] = useState(false);
-
+  // Fetch product details
   useEffect(() => {
     dispatch(fetchProductById(id));
-    return () => {
-      dispatch(clearProduct());
-    };
   }, [dispatch, id]);
 
+  // Populate form once product is fetched
   useEffect(() => {
-    if (product) {
-      setFormData({
-        product_name: product.product_name || '',
-        desc: product.desc || '',
-        mrp: product.mrp || '',
-        salesPrice: product.salesPrice || '',
-        colors: product.colors || '',
-        ratings: product.ratings || '',
-        product_type: product.product_type || '',
-        categories: product.categories || '',
-        brands: product.brands || '',
-        image: product.image || '',
+    if (productDetails) {
+      setForm({
+        product_name: productDetails.product_name || "",
+        desc: productDetails.desc || "",
+        mrp: productDetails.mrp || "",
+        salesPrice: productDetails.salesPrice || "",
+        colors: productDetails.colors || "",
+        product_type: productDetails.product_type || "",
+        categories: productDetails.categories || "",
+        brands: productDetails.brands || "",
+        totalStock: productDetails.totalStock || "",
+        image: null,
       });
     }
-  }, [product]);
+  }, [productDetails]);
 
-  const uploadImageHandler = async (e) => {
-    const file = e.target.files[0];
-    const data = new FormData();
-    data.append('image', file);
-    setUploading(true);
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: files ? files[0] : value,
+    }));
+  };
 
-    try {
-      const res = await axios.post('/api/upload', data);
-      setFormData({ ...formData, image: res.data.url });
-    } catch (error) {
-      alert('Image upload failed');
-    } finally {
-      setUploading(false);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    for (const key in form) {
+      if (form[key]) formData.append(key, form[key]);
+    }
+
+    const result = await dispatch(updateProduct({ id, updatedData: formData }));
+
+    if (updateProduct.fulfilled.match(result)) {
+      toast.success("Product updated successfully!");
+      navigate("/admin/products");
+    } else {
+      toast.error(updateProductError || "Failed to update product.");
     }
   };
 
-  const submitHandler = (e) => {
-    e.preventDefault();
-    dispatch(updateProduct({ id, productData: formData })).then(() => {
-      navigate('/products');
-    });
-  };
+  if (status === "loading") return <Spinner animation="border" className="d-block mx-auto mt-5" />;
 
   return (
-    <div>
-      <h2>Edit Product</h2>
+    <Container className="mt-4" style={{ maxWidth: "700px" }}>
+      <h3>Edit Product</h3>
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {loading && <Spinner animation="border" />}
+      <Form onSubmit={handleSubmit} encType="multipart/form-data">
+        <Form.Group className="mb-3">
+          <Form.Label>Product Name</Form.Label>
+          <Form.Control
+            type="text"
+            name="product_name"
+            value={form.product_name}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
 
-      {!loading && (
-        <Form onSubmit={submitHandler}>
-          <Form.Group controlId="product_name" className="mb-3">
-            <Form.Label>Product Name</Form.Label>
-            <Form.Control
-              type="text"
-              value={formData.product_name}
-              onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
-              required
-            />
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="desc"
+            value={form.desc}
+            onChange={handleChange}
+            rows={3}
+            required
+          />
+        </Form.Group>
 
-          <Form.Group controlId="desc" className="mb-3">
-            <Form.Label>Description</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={formData.desc}
-              onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
-              required
-            />
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>MRP</Form.Label>
+          <Form.Control
+            type="number"
+            name="mrp"
+            value={form.mrp}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
 
-          <Form.Group controlId="mrp" className="mb-3">
-            <Form.Label>MRP</Form.Label>
-            <Form.Control
-              type="number"
-              value={formData.mrp}
-              onChange={(e) => setFormData({ ...formData, mrp: e.target.value })}
-              required
-            />
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Sales Price</Form.Label>
+          <Form.Control
+            type="number"
+            name="salesPrice"
+            value={form.salesPrice}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
 
-          <Form.Group controlId="salesPrice" className="mb-3">
-            <Form.Label>Sales Price</Form.Label>
-            <Form.Control
-              type="number"
-              value={formData.salesPrice}
-              onChange={(e) => setFormData({ ...formData, salesPrice: e.target.value })}
-              required
-            />
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Colors</Form.Label>
+          <Form.Control
+            type="text"
+            name="colors"
+            value={form.colors}
+            onChange={handleChange}
+          />
+        </Form.Group>
 
-          <Form.Group controlId="colors" className="mb-3">
-            <Form.Label>Colors (comma separated)</Form.Label>
-            <Form.Control
-              type="text"
-              value={formData.colors}
-              onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-            />
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Product Type</Form.Label>
+          <Form.Select
+            name="product_type"
+            value={form.product_type}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select</option>
+            <option>Mens</option>
+            <option>Womans</option>
+            <option>Boy</option>
+            <option>Girl</option>
+            <option>Baby</option>
+          </Form.Select>
+        </Form.Group>
 
-          <Form.Group controlId="ratings" className="mb-3">
-            <Form.Label>Ratings</Form.Label>
-            <Form.Control
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              value={formData.ratings}
-              onChange={(e) => setFormData({ ...formData, ratings: e.target.value })}
-            />
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Category</Form.Label>
+          <Form.Select
+            name="categories"
+            value={form.categories}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select</option>
+            <option>Shirts</option>
+            <option>T-shirts</option>
+            <option>Jeans</option>
+            <option>Dresses</option>
+            <option>Footwear</option>
+          </Form.Select>
+        </Form.Group>
 
-          <Form.Group controlId="product_type" className="mb-3">
-            <Form.Label>Product Type</Form.Label>
-            <Form.Select
-              value={formData.product_type}
-              onChange={(e) => setFormData({ ...formData, product_type: e.target.value })}
-              required
-            >
-              <option value="">Select Type</option>
-              <option value="Mens">Mens</option>
-              <option value="Womans">Womans</option>
-              <option value="Boy">Boy</option>
-              <option value="Girl">Girl</option>
-              <option value="Baby">Baby</option>
-            </Form.Select>
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Brand</Form.Label>
+          <Form.Control
+            type="text"
+            name="brands"
+            value={form.brands}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
 
-          <Form.Group controlId="categories" className="mb-3">
-            <Form.Label>Category</Form.Label>
-            <Form.Select
-              value={formData.categories}
-              onChange={(e) => setFormData({ ...formData, categories: e.target.value })}
-              required
-            >
-              <option value="">Select Category</option>
-              <option value="Shirts">Shirts</option>
-              <option value="T-shirts">T-shirts</option>
-              <option value="Jeans">Jeans</option>
-              <option value="Dresses">Dresses</option>
-              <option value="Shoes">Shoes</option>
-            </Form.Select>
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Total Stock</Form.Label>
+          <Form.Control
+            type="number"
+            name="totalStock"
+            value={form.totalStock}
+            onChange={handleChange}
+          />
+        </Form.Group>
 
-          <Form.Group controlId="brands" className="mb-3">
-            <Form.Label>Brand</Form.Label>
-            <Form.Select
-              value={formData.brands}
-              onChange={(e) => setFormData({ ...formData, brands: e.target.value })}
-              required
-            >
-              <option value="">Select Brand</option>
-              <option value="Nike">Nike</option>
-              <option value="Adidas">Adidas</option>
-              <option value="Puma">Puma</option>
-            </Form.Select>
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Replace Image (optional)</Form.Label>
+          <Form.Control
+            type="file"
+            name="image"
+            accept="image/*"
+            onChange={handleChange}
+          />
+        </Form.Group>
 
-          <Form.Group controlId="image" className="mb-3">
-            <Form.Label>Image</Form.Label>
-            <Form.Control type="text" value={formData.image} readOnly />
-            <Form.Control type="file" onChange={uploadImageHandler} />
-            {uploading && <Spinner animation="border" size="sm" />}
-          </Form.Group>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={updateProductStatus === "loading"}
+        >
+          {updateProductStatus === "loading" ? (
+            <Spinner animation="border" size="sm" />
+          ) : (
+            "Update Product"
+          )}
+        </Button>
+      </Form>
 
-          <Button type="submit" disabled={loading || uploading}>
-            Update Product
-          </Button>
-        </Form>
-      )}
-    </div>
+      <ToastContainer position="top-center" autoClose={2000} />
+    </Container>
   );
-};
+}
 
 export default EditProduct;

@@ -1,138 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Spinner } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { registerUser } from '../features/user/userSlice';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Form, Button, Container, Spinner, Alert } from "react-bootstrap";
+import { registerUser } from "../redux/slices/authSlice";
 
-const Register = () => {
+function Register() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  // Use `user` state from userSlice, not `auth`
-  const { loading, error, user } = useSelector((state) => state.user);
+  const { loading, error } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    password: '',
-    confirmPassword: '',
-    profileImage: '',
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    profileImage: null,
   });
 
-  const [uploading, setUploading] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      navigate('/products');
-    }
-  }, [user, navigate]);
-
-  // Removed clearError dispatch because no reducer for that exists in userSlice
-  // You can add clearError if you want in the slice
-
-  const uploadImageHandler = async (e) => {
-    const file = e.target.files[0];
-    const data = new FormData();
-    data.append('image', file);
-    setUploading(true);
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: data,
-      });
-      const json = await res.json();
-      setFormData((prev) => ({ ...prev, profileImage: json.url }));
-    } catch {
-      alert('Image upload failed');
-    }
-    setUploading(false);
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setFormData({
+      ...formData,
+      [name]: files ? files[0] : value,
+    });
   };
 
-  const submitHandler = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match");
-      return;
+
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("email", formData.email);
+    data.append("phone", formData.phone);
+    data.append("password", formData.password);
+    if (formData.profileImage) {
+      data.append("profileImage", formData.profileImage);
     }
-    dispatch(registerUser(formData));
+
+    dispatch(registerUser(data));
   };
 
   return (
-    <div>
-      <h2>Register</h2>
+    <Container className="mt-5" style={{ maxWidth: "500px" }}>
+      <h3 className="mb-4">Register</h3>
+
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Form onSubmit={submitHandler}>
-        <Form.Group controlId="name" className="mb-3">
+      <Form onSubmit={handleSubmit}>
+        <Form.Group controlId="formName" className="mb-3">
           <Form.Label>Name</Form.Label>
           <Form.Control
             type="text"
+            placeholder="Enter name"
+            name="name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={handleChange}
             required
           />
         </Form.Group>
 
-        <Form.Group controlId="email" className="mb-3">
+        <Form.Group controlId="formEmail" className="mb-3">
           <Form.Label>Email</Form.Label>
           <Form.Control
             type="email"
+            placeholder="Enter email"
+            name="email"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={handleChange}
             required
           />
         </Form.Group>
 
-        <Form.Group controlId="mobile" className="mb-3">
-          <Form.Label>Mobile</Form.Label>
+        <Form.Group controlId="formPhone" className="mb-3">
+          <Form.Label>Phone</Form.Label>
           <Form.Control
             type="text"
-            value={formData.mobile}
-            onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+            placeholder="Enter phone number"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
             required
           />
         </Form.Group>
 
-        <Form.Group controlId="profileImage" className="mb-3">
-          <Form.Label>Profile Image</Form.Label>
-          <Form.Control type="file" onChange={uploadImageHandler} />
-          {uploading && <Spinner animation="border" size="sm" />}
-          {formData.profileImage && (
-            <img
-              src={formData.profileImage}
-              alt="Profile"
-              style={{ marginTop: '10px', maxWidth: '150px' }}
-            />
-          )}
-        </Form.Group>
-
-        <Form.Group controlId="password" className="mb-3">
+        <Form.Group controlId="formPassword" className="mb-3">
           <Form.Label>Password</Form.Label>
           <Form.Control
             type="password"
+            placeholder="Password"
+            name="password"
             value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            onChange={handleChange}
             required
           />
         </Form.Group>
 
-        <Form.Group controlId="confirmPassword" className="mb-3">
-          <Form.Label>Confirm Password</Form.Label>
+        <Form.Group controlId="formProfileImage" className="mb-3">
+          <Form.Label>Profile Image</Form.Label>
           <Form.Control
-            type="password"
-            value={formData.confirmPassword}
-            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            required
+            type="file"
+            name="profileImage"
+            onChange={handleChange}
           />
         </Form.Group>
 
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
+        <Button variant="dark" type="submit" disabled={loading}>
+          {loading ? <Spinner animation="border" size="sm" /> : "Register"}
         </Button>
       </Form>
-    </div>
+    </Container>
   );
-};
+}
 
 export default Register;

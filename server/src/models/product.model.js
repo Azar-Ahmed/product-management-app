@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema(
   {
@@ -7,34 +7,33 @@ const productSchema = new mongoose.Schema(
     desc: { type: String, required: true },
     mrp: { type: Number, required: true },
     salesPrice: { type: Number, required: true },
-    colors: [{ type: String }],
+    colors: { type: String },
     ratings: { type: Number, default: 0, min: 0, max: 5 },
     product_type: {
       type: String,
-      enum: ["Mens", "Womans", "Boy", "Girl", "Baby"],
+      enum: ['Mens', 'Womans', 'Boy', 'Girl', 'Baby'],
       required: true,
     },
-    categories: [
-      {
-        type: String,
-        num: ["Shirts", "T-shirts", "Jeans", "Dresses", "Shoes"],
-        required: true,
-      },
-    ],
+    categories: {
+      type: String,
+      num: ['Shirts', 'T-shirts', 'Jeans', 'Dresses', 'Footwear'],
+      required: true,
+    },
     brands: {
       type: String,
       required: true,
     },
+    totalStock: { type: Number, default: 0},
   },
   { timestamps: true }
 );
 
-productSchema.set("toJSON", {
+productSchema.set('toJSON', {
   transform: (doc, ret) => {
     delete ret.password;
     return ret;
   },
 });
 
-const Product = mongoose.model("Product", productSchema);
+const Product = mongoose.model('Product', productSchema);
 export default Product;

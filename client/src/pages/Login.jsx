@@ -1,68 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearError } from '../features/user/userSlice';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Form, Button, Container, Spinner, Alert } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../redux/slices/authSlice";
+import { useNavigate } from "react-router-dom";
 
-const Login = () => {
+function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Use user slice state (not auth)
-  const { loading, error, user } = useSelector((state) => state.user);
+  const { loading, error, user } = useSelector((state) => state.auth);
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(loginUser({ email, password }));
+  };
+
+  // Redirect after successful login
   useEffect(() => {
     if (user) {
-      navigate('/products');
+      navigate("/");
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    dispatch(clearError());
-  }, [dispatch]);
-
-  const submitHandler = (e) => {
-    e.preventDefault();
-    dispatch(loginUser(formData));
-  };
-
   return (
-    <div>
-      <h2>Login</h2>
+    <Container className="mt-5" style={{ maxWidth: "500px" }}>
+      <h3 className="mb-4">Login</h3>
+
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Form onSubmit={submitHandler}>
-        <Form.Group controlId="email" className="mb-3">
+      <Form onSubmit={handleSubmit}>
+        <Form.Group controlId="formEmail" className="mb-3">
           <Form.Label>Email</Form.Label>
           <Form.Control
             type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="Enter email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </Form.Group>
 
-        <Form.Group controlId="password" className="mb-3">
+        <Form.Group controlId="formPassword" className="mb-3">
           <Form.Label>Password</Form.Label>
           <Form.Control
             type="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
         </Form.Group>
 
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
+        <Button variant="dark" type="submit" disabled={loading}>
+          {loading ? <Spinner animation="border" size="sm" /> : "Login"}
         </Button>
       </Form>
-    </div>
+    </Container>
   );
-};
+}
 
 export default Login;

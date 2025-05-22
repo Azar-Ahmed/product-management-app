@@ -19,14 +19,18 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 export const addProducts = asyncHandler(async (req, res) => {
   const data = await addProductService(req.body, req.files?.image);
-  res.status(201).json(data);
+  res.status(201).json({ product: data });
 });
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
 export const updateProducts = asyncHandler(async (req, res) => {
-  const data = await updateProductService(req.params.id, req.body, req.files?.image);
-  res.status(200).json(data);
+  const data = await updateProductService(
+    req.params.id,
+    req.body,
+    req.files?.image
+  );
+  res.status(200).json({ product: data });
 });
 
 // @desc    Delete a product

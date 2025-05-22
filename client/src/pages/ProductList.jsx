@@ -1,159 +1,134 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Row,
-  Col,
-  Card,
-  Button,
-  Form,
-  InputGroup,
-  Pagination,
-  Spinner,
-  Alert,
-} from 'react-bootstrap';
+import React, { useEffect } from 'react';
+import { Container, Row, Col, Button } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, deleteProduct } from '../features/product/productSlice';
-import { useNavigate } from 'react-router-dom';
+import {
+  fetchFilteredProducts,
+  setSelectedCategory,
+  setPriceRange,
+  setSelectedProductType,
+  setSortOption,
+  setCurrentPage,
+} from '../redux/slices/productSlice';
 
-const ProductList = () => {
+import ProductFilter from '../components/ProductFilter';
+import ProductCart from '../components/ProductCard';
+
+const categories = ['Shirts', 'T-shirts', 'Jeans', 'Dresses', 'Footwear'];
+const product_type = ['Mens', 'Womans', 'Boy', 'Girl', 'Baby'];
+
+function ProductList() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const {
+    filteredProducts,
+    selectedCategory,
+    selectedAuthor,
+    priceRange,
+    selectedProductType,
+    sortOption,
+    status,
+    currentPage,
+    totalPages,
+  } = useSelector((state) => state.products);
 
-  const { products, loading, error, pages } = useSelector((state) => state.products);
-
-  const [filters, setFilters] = useState({
-    brand: '',
-    category: '',
-    product_type: '',
-    search: '',
-    sort: '',
-    page: 1,
-  });
-
+  // Trigger API fetch when filters or page changes
   useEffect(() => {
-    dispatch(fetchProducts(filters));
-  }, [dispatch, filters]);
+    dispatch(fetchFilteredProducts());
+  }, [
+    dispatch,
+    selectedCategory,
+    selectedAuthor,
+    priceRange,
+    selectedProductType,
+    sortOption,
+    currentPage,
+  ]);
 
-  const handlePageChange = (pageNum) => {
-    setFilters({ ...filters, page: pageNum });
+  const handleSortChange = (e) => {
+    dispatch(setSortOption(e.target.value));
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure to delete this product?')) {
-      dispatch(deleteProduct(id)).then(() => {
-        dispatch(fetchProducts(filters));
-      });
+  const handlePageChange = (direction) => {
+    if (direction === 'prev' && currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    } else if (direction === 'next' && currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
     }
   };
 
   return (
-    <div>
-      <h2>Product List</h2>
+    <Container fluid className="mt-4">
+      <Row>
+        <Col md={3}>
+          <ProductFilter
+            categories={categories}
+            product_type={product_type}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={(val) => dispatch(setSelectedCategory(val))}
+            selectedAuthor={selectedAuthor}
+            setSelectedAuthor={(val) => dispatch(setSelectedAuthor(val))}
+            priceRange={priceRange}
+            setPriceRange={(val) => dispatch(setPriceRange(val))}
+            selectedProductType={selectedProductType}
+            setSelectedProductType={(val) =>
+              dispatch(setSelectedProductType(val))
+            }
+          />
+        </Col>
+        <Col md={9}>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <h3>Showing {filteredProducts.length} results</h3>
+            <div>
+              <label htmlFor="sortPrice" className="mr-2">
+                Sort by Price:
+              </label>
+              <select
+                id="sortPrice"
+                className="form-select"
+                value={sortOption}
+                onChange={handleSortChange}
+              >
+                <option value="lowToHigh">Price: Low to High</option>
+                <option value="highToLow">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+          <hr />
+          {status === 'loading' ? (
+            <p>Loading...</p>
+          ) : status === 'failed' ? (
+            <p>Failed to load products.</p>
+          ) : (
+            <>
+              <ProductCart products={filteredProducts} />
 
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      <Row className="mb-3">
-        <Col md={3}>
-          <Form.Select
-            value={filters.brand}
-            onChange={(e) => setFilters({ ...filters, brand: e.target.value, page: 1 })}
-          >
-            <option value="">All Brands</option>
-            <option>Nike</option>
-            <option>Adidas</option>
-            <option>Puma</option>
-          </Form.Select>
-        </Col>
-        <Col md={3}>
-          <Form.Select
-            value={filters.category}
-            onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })}
-          >
-            <option value="">All Categories</option>
-            <option>Shirts</option>
-            <option>T-shirts</option>
-            <option>Jeans</option>
-            <option>Dresses</option>
-            <option>Shoes</option>
-          </Form.Select>
-        </Col>
-        <Col md={3}>
-          <Form.Select
-            value={filters.product_type}
-            onChange={(e) => setFilters({ ...filters, product_type: e.target.value, page: 1 })}
-          >
-            <option value="">All Types</option>
-            <option>Mens</option>
-            <option>Womans</option>
-            <option>Boy</option>
-            <option>Girl</option>
-            <option>Baby</option>
-          </Form.Select>
-        </Col>
-        <Col md={3}>
-          <Form.Select
-            value={filters.sort}
-            onChange={(e) => setFilters({ ...filters, sort: e.target.value, page: 1 })}
-          >
-            <option value="">Sort</option>
-            <option value="price_asc">Price Low to High</option>
-            <option value="price_desc">Price High to Low</option>
-          </Form.Select>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="d-flex justify-content-center mt-4 gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={() => handlePageChange('prev')}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="align-self-center">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handlePageChange('next')}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </Col>
       </Row>
-
-      <InputGroup className="mb-3">
-        <Form.Control
-          placeholder="Search products..."
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-        />
-      </InputGroup>
-
-      {loading ? (
-        <Spinner animation="border" />
-      ) : (
-        <Row>
-          {products.map((p) => (
-            <Col md={4} key={p._id} className="mb-3">
-              <Card>
-                <Card.Img variant="top" src={p.image} />
-                <Card.Body>
-                  <Card.Title>{p.product_name}</Card.Title>
-                  <Card.Text>{p.desc}</Card.Text>
-                  <Card.Text>
-                    <strong>₹{p.salesPrice}</strong>{' '}
-                    <span className="text-muted text-decoration-line-through">₹{p.mrp}</span>
-                  </Card.Text>
-                  <Button
-                    variant="primary"
-                    className="me-2"
-                    onClick={() => navigate(`/products/edit/${p._id}`)}
-                  >
-                    Edit
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDelete(p._id)}>
-                    Delete
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      )}
-
-      <Pagination>
-        {[...Array(pages).keys()].map((x) => (
-          <Pagination.Item
-            key={x + 1}
-            active={x + 1 === filters.page}
-            onClick={() => handlePageChange(x + 1)}
-          >
-            {x + 1}
-          </Pagination.Item>
-        ))}
-      </Pagination>
-    </div>
+    </Container>
   );
-};
+}
 
 export default ProductList;
