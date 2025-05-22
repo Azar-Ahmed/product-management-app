@@ -43,11 +43,20 @@ const ProductListTablePage = () => {
     navigate(`/edit-product/${id}`);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      dispatch(deleteProduct(id));
-    }
-  };
+ const handleDelete = (id) => {
+  if (window.confirm('Are you sure you want to delete this product?')) {
+    dispatch(deleteProduct(id))
+      .unwrap()
+      .then(() => {
+        alert("Product deleted successfully!");
+        dispatch(fetchAllProducts());  // Refetch updated product list
+      })
+      .catch((error) => {
+        alert("Delete failed: " + error);
+        console.error("Delete error:", error);
+      });
+  }
+};
   const columns = [
     {
       name: "#",

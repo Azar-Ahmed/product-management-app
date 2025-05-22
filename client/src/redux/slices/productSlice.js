@@ -22,6 +22,15 @@ const initialState = {
   totalPages: 1,
 };
 
+// Helper to get token from Redux state or fallback to localStorage
+const getToken = (state) => {
+  if (state.auth && state.auth.token) {
+    return state.auth.token;
+  }
+  const tokenFromLocalStorage = localStorage.getItem("token");
+  return tokenFromLocalStorage || null;
+};
+
 // Fetch filtered products with pagination
 export const fetchFilteredProducts = createAsyncThunk(
   "products/fetchFilteredProducts",
@@ -100,7 +109,7 @@ export const addProduct = createAsyncThunk(
   "products/addProduct",
   async (productData, { getState, rejectWithValue }) => {
     try {
-      const token = getState().auth.token;
+      const token = getToken(getState());
       const config = {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -127,13 +136,14 @@ export const deleteProduct = createAsyncThunk(
   "products/deleteProduct",
   async (id, { getState, rejectWithValue }) => {
     try {
-      const token = getState().auth.token;
+      const token = getToken(getState());
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+         withCredentials: true,
       };
-      await axios.delete(
+     await axios.delete(
         `http://localhost:5001/api/v1/product/delete/${id}`,
         config
       );
@@ -151,7 +161,7 @@ export const updateProduct = createAsyncThunk(
   "products/updateProduct",
   async ({ id, updatedData }, { getState, rejectWithValue }) => {
     try {
-      const token = getState().auth.token;
+      const token = getToken(getState());
       const config = {
         headers: {
           "Content-Type": "multipart/form-data",
