@@ -41,17 +41,24 @@ function AppNavbar() {
               </>
             ) : (
               <NavDropdown title={`Hello, ${user.name}`} id="user-profile-dropdown">
-                <NavDropdown.Item as={Link} to="/admin/profile">
-                  Profile
-                </NavDropdown.Item>
-                
-                <NavDropdown.Item as={Link} to="/admin/products">
-                  Admin Products
-                </NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item onClick={handleLogout}>
-                  Logout
-                </NavDropdown.Item>
+                {user.role === "admin" ? (
+                  <>
+                    <NavDropdown.Item as={Link} to="/admin/profile">
+                      My Profile
+                    </NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/admin/products">
+                      Products
+                    </NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={handleLogout}>
+                      Logout
+                    </NavDropdown.Item>
+                  </>
+                ) : (
+                  <NavDropdown.Item onClick={handleLogout}>
+                    Logout
+                  </NavDropdown.Item>
+                )}
               </NavDropdown>
             )}
           </Nav>

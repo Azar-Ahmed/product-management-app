@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Form, Button, Container, Spinner, Alert } from "react-bootstrap";
+import { Form, Button, Container, Spinner } from "react-bootstrap";
 import { registerUser } from "../redux/slices/authSlice";
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Register() {
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+
+  const { loading, error, user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -38,11 +43,24 @@ function Register() {
     dispatch(registerUser(data));
   };
 
+  // Show toast on error
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  // Show success toast and redirect on registration success
+  useEffect(() => {
+    if (user) {
+      toast.success("Registration successful!");
+      navigate("/");
+    }
+  }, [user, navigate]);
+
   return (
     <Container className="mt-5" style={{ maxWidth: "500px" }}>
       <h3 className="mb-4">Register</h3>
-
-      {error && <Alert variant="danger">{error}</Alert>}
 
       <Form onSubmit={handleSubmit}>
         <Form.Group controlId="formName" className="mb-3">
@@ -106,6 +124,9 @@ function Register() {
           {loading ? <Spinner animation="border" size="sm" /> : "Register"}
         </Button>
       </Form>
+
+      {/* Toast container for notifications */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </Container>
   );
 }
