@@ -24,4 +24,4 @@ export const updateProductSchema = Joi.object({
   categories: Joi.string().required(),
   brands: Joi.string().optional(),
   totalStock: Joi.number().optional(),
-}).min(1); // Require at least one field for update
+}).min(1); 

@@ -1,5 +1,5 @@
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res) => {
   console.error(err); // Log error in console (you can enhance this with Winston/LogDNA)
 
   const statusCode = err.statusCode || 500;

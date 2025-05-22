@@ -12,10 +12,7 @@ import { validate } from "../middlewares/validate.middleware.js";
 
 const router = express.Router();
 
-// Validate signup input
 router.post("/signup", validate(signUpUserSchema), signUp);
-
-// Validate signin input (email + password)
 router.post("/signin", validate(signInUserSchema), signIn);
 
 router.get("/signout", isAuthenticated, signOut);

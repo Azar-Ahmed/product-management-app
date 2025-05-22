@@ -117,7 +117,7 @@ export const getFilteredProductsService = async (queryParams) => {
     ],
   };
 
-  // Category filter (assuming it's stored as a string in `categories` field)
+  // Category filter
   if (category) {
     query.categories = category;
   }
